@@ -82,3 +82,29 @@ export interface PaymentFilters {
   sort?: "createdAt" | "amount"
   direction?: "asc" | "desc"
 }
+
+export type CardStatus = "active" | "frozen" | "cancelled"
+
+/**
+ * A virtual card issued from the console (NWP-201).
+ *
+ * There is deliberately no field for the full number. It exists in the
+ * creation response and nowhere else; the record keeps the last four and an
+ * opaque reference.
+ */
+export interface Card {
+  id: string
+  nickname: string
+  merchantId: string
+  /** Integer minor units. Never a float. */
+  spendLimit: number
+  /** Integer minor units. Spend recorded against the limit. */
+  spend: number
+  currency: Currency
+  last4: string
+  /** Opaque handle to the issued number. Never the number itself. */
+  reference: string
+  status: CardStatus
+  /** ISO 8601, always UTC. */
+  createdAt: string
+}

@@ -116,3 +116,12 @@ export function refundsForPayment(paymentId: string) {
 export function disputeForPayment(paymentId: string) {
   return store.disputes.find((d) => d.paymentId === paymentId) ?? null
 }
+
+/** Cards, newest first. The one place card listing is ordered. */
+export function listCards() {
+  return [...store.cards].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+}
+
+export function cardById(id: string) {
+  return store.cards.find((c) => c.id === id) ?? null
+}
