@@ -4,6 +4,18 @@ import { Card } from "@/data/types"
 import { generateCardNumber, validateCardInput } from "@/lib/cards"
 import { NextRequest, NextResponse } from "next/server"
 
+/**
+ * Next id, derived from the highest already issued rather than the count, so
+ * removing a card can never hand a new one an id that already existed.
+ */
+function nextCardId(): string {
+  const highest = store.cards.reduce((max, card) => {
+    const n = Number(card.id.replace("card_", ""))
+    return Number.isFinite(n) && n > max ? n : max
+  }, 0)
+  return `card_${String(highest + 1).padStart(4, "0")}`
+}
+
 /** Issued cards. Masked: no route but creation ever returns a full number. */
 export function GET() {
   return NextResponse.json({ cards: listCards() })
@@ -31,7 +43,7 @@ export async function POST(request: NextRequest) {
 
   const number = generateCardNumber()
   const card: Card = {
-    id: `card_${String(store.cards.length + 1).padStart(4, "0")}`,
+    id: nextCardId(),
     nickname: parsed.value.nickname,
     merchantId: parsed.value.merchantId,
     spendLimit: parsed.value.spendLimit,
