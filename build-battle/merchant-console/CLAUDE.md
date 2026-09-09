@@ -57,6 +57,12 @@ These four explain most of the code, and breaking them is how bugs get in here.
 | `src/components/` | Tremor-based primitives and the console's own components |
 | `src/lib/` | Money, date, and CSV helpers, each with a `.test.ts` beside it. Read these before touching an amount |
 
+## Release Standards
+
+- **Test evidence before merging.** Every change ships with proof it was tested: a passing `npm test` run, plus a new or extended test when behavior changed. No evidence, no merge.
+- **No direct commits to `main`.** All work lands through a pull request from a branch. `main` is never pushed to directly.
+- **Every PR states its business impact.** The PR description includes a one-line summary of what this change means for ops, merchants, or the business, not just what changed in the code.
+
 ## Before you push
 
 Run `npm test`, then `/ship-ready`. The skill checks the rules above, not just formatting.
