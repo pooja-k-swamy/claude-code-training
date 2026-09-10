@@ -141,6 +141,16 @@ export function validateCardInput(raw: unknown): CardValidation {
     }
   }
 
+  // A card belongs to one merchant, so it settles in that merchant's currency.
+  // The dialog picks it for you; a direct API call must still agree.
+  const merchant = merchantById(merchantId)!
+  if (currency !== merchant.currency) {
+    return {
+      ok: false,
+      message: `${merchant.name} settles in ${merchant.currency}. A card for them cannot be ${currency}.`,
+    }
+  }
+
   return {
     ok: true,
     value: { nickname, merchantId, spendLimit, currency: currency as Currency },

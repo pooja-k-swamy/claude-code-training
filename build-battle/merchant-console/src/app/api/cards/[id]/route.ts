@@ -52,6 +52,11 @@ export async function PATCH(
     )
   }
 
+  card.events.push({
+    at: new Date().toISOString(),
+    from: card.status,
+    to: status as CardStatus,
+  })
   card.status = status as CardStatus
   return NextResponse.json({ card })
 }

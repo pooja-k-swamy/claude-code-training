@@ -139,9 +139,32 @@ describe("validateCardInput", () => {
 
   it("rejects a currency outside the allowlist", () => {
     expect(validateCardInput({ ...valid, currency: "JPY" }).ok).toBe(false)
-    for (const currency of CARD_CURRENCIES) {
-      expect(validateCardInput({ ...valid, currency }).ok).toBe(true)
+    expect(validateCardInput({ ...valid, currency: "" }).ok).toBe(false)
+  })
+
+  it("accepts each allowed currency, on a merchant that settles in it", () => {
+    // mch_01 USD, mch_04 GBP, mch_05 EUR.
+    const byCurrency: Record<string, string> = {
+      USD: "mch_01",
+      GBP: "mch_04",
+      EUR: "mch_05",
     }
+    for (const currency of CARD_CURRENCIES) {
+      const result = validateCardInput({
+        ...valid,
+        merchantId: byCurrency[currency],
+        currency,
+      })
+      expect(result.ok).toBe(true)
+    }
+  })
+
+  it("refuses a currency the merchant does not settle in", () => {
+    // The dialog picks the currency for you; a direct API call must still agree.
+    const result = validateCardInput({ ...valid, merchantId: "mch_01", currency: "EUR" })
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.message).toContain("USD")
   })
 
   it("rejects a missing nickname", () => {

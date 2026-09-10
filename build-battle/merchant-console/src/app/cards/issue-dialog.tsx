@@ -43,6 +43,8 @@ export function IssueCardDialog({
   const [pending, setPending] = useState(false)
   /** Present only between a successful issue and closing the drawer. */
   const [issued, setIssued] = useState<Issued | null>(null)
+  /** One key per dialog session, so a retried submit is not a second card. */
+  const [idempotencyKey, setIdempotencyKey] = useState(() => crypto.randomUUID())
 
   const reset = () => {
     setNickname("")
@@ -51,6 +53,7 @@ export function IssueCardDialog({
     setCurrency("USD")
     setError(null)
     setIssued(null)
+    setIdempotencyKey(crypto.randomUUID())
   }
 
   const close = () => {
@@ -61,6 +64,8 @@ export function IssueCardDialog({
   }
 
   const submit = async () => {
+    // Already issuing, or already issued: a second click must not issue again.
+    if (pending || issued) return
     setError(null)
     const spendLimit = parseAmountToMinorUnits(limit)
     if (spendLimit === null) {
@@ -72,7 +77,10 @@ export function IssueCardDialog({
     try {
       const response = await fetch("/api/cards", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: {
+          "content-type": "application/json",
+          "idempotency-key": idempotencyKey,
+        },
         body: JSON.stringify({ nickname, merchantId, spendLimit, currency }),
       })
       const data = await response.json()

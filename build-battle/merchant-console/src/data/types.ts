@@ -92,6 +92,13 @@ export type CardStatus = "active" | "frozen" | "cancelled"
  * creation response and nowhere else; the record keeps the last four and an
  * opaque reference.
  */
+export interface CardEvent {
+  /** ISO 8601, always UTC. */
+  at: string
+  from: CardStatus | null
+  to: CardStatus
+}
+
 export interface Card {
   id: string
   nickname: string
@@ -107,4 +114,6 @@ export interface Card {
   status: CardStatus
   /** ISO 8601, always UTC. */
   createdAt: string
+  /** Every status change, oldest first. Issue is the first entry. */
+  events: CardEvent[]
 }

@@ -3,12 +3,18 @@ import { StatusBadge } from "@/components/ui/payments/StatusBadge"
 import { merchantById } from "@/data/merchants"
 import { cardById } from "@/data/queries"
 import { maskCard, spendRatio } from "@/lib/cards"
-import { formatDate } from "@/lib/dates"
+import { formatDate, formatInZone } from "@/lib/dates"
 import { formatMoney } from "@/lib/money"
 import { cx } from "@/lib/utils"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 import { CardStatusControls } from "./status-controls"
+
+const LABELS: Record<string, string> = {
+  active: "Active",
+  frozen: "Frozen",
+  cancelled: "Cancelled",
+}
 
 export default async function CardDetailPage({
   params,
@@ -103,6 +109,31 @@ export default async function CardDetailPage({
           </div>
         ))}
       </dl>
+
+      <Divider />
+
+      <div className="max-w-xl">
+        <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-50">
+          History
+        </h2>
+        <ol className="mt-3 space-y-2">
+          {[...card.events].reverse().map((event, i) => (
+            <li
+              key={`${event.at}-${i}`}
+              className="flex items-baseline justify-between gap-4 text-sm"
+            >
+              <span className="text-gray-900 dark:text-gray-50">
+                {event.from === null
+                  ? "Issued"
+                  : `${LABELS[event.from]} \u2192 ${LABELS[event.to]}`}
+              </span>
+              <span className="tabular-nums text-gray-500">
+                {formatInZone(event.at, merchant?.timezone ?? "UTC")}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
 
       <p className="mt-8 max-w-xl text-xs text-gray-500">
         The full number was shown once, when this card was issued. It is not

@@ -5,6 +5,13 @@ import { generateCardNumber, validateCardInput } from "@/lib/cards"
 import { NextRequest, NextResponse } from "next/server"
 
 /**
+ * Cards already issued under an Idempotency-Key, so a double-clicked form or a
+ * retried request returns the original card instead of issuing a second one.
+ * In memory, gone on restart, same as the rest of the store.
+ */
+const issuedKeys = new Map<string, string>()
+
+/**
  * Next id, derived from the highest already issued rather than the count, so
  * removing a card can never hand a new one an id that already existed.
  */
@@ -41,6 +48,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: parsed.message }, { status: 400 })
   }
 
+  // A repeat of a request already served returns the original card and does not
+  // issue a second number. 200 rather than 201: nothing was created this time,
+  // and `number` is null because the reveal already happened.
+  const idempotencyKey = request.headers.get("idempotency-key")
+  if (idempotencyKey) {
+    const existingId = issuedKeys.get(idempotencyKey)
+    if (existingId) {
+      const existing = store.cards.find((c) => c.id === existingId)
+      if (existing) {
+        return NextResponse.json({ card: existing, number: null }, { status: 200 })
+      }
+    }
+  }
+
+  const issuedAt = new Date().toISOString()
   const number = generateCardNumber()
   const card: Card = {
     id: nextCardId(),
@@ -52,10 +74,12 @@ export async function POST(request: NextRequest) {
     last4: number.slice(-4),
     reference: `ref_${number.slice(-4)}_${Date.now().toString(36)}`,
     status: "active",
-    createdAt: new Date().toISOString(),
+    createdAt: issuedAt,
+    events: [{ at: issuedAt, from: null, to: "active" }],
   }
 
   store.cards.push(card)
+  if (idempotencyKey) issuedKeys.set(idempotencyKey, card.id)
 
   // `number` appears here and nowhere else, ever.
   return NextResponse.json({ card, number }, { status: 201 })

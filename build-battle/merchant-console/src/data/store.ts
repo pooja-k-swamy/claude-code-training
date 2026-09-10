@@ -30,7 +30,7 @@ declare global {
 
 function createStore(): Store {
   const { payments, refunds, disputes, payouts } = generate()
-  return { merchants, payments, refunds, disputes, payouts, cards: seedCards() }
+  return { merchants, payments, refunds, disputes, payouts, cards: seedCards(payments) }
 }
 
 export const store: Store = globalThis.__northwindStore ?? createStore()
